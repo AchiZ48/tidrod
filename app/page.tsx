@@ -1,5 +1,5 @@
 import Link from "next/link";
-import MouseAura from "./components/ui/MouseAura";
+import MouseAura from "../components/MouseAura";
 
 export default function Home() {
   return (
