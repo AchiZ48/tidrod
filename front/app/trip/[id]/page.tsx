@@ -6,6 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { getTrip, getToken, getUser } from '@/lib/api';
 import Chat from '@/components/Chat';
+import { SkeletonTripDetail } from '@/components/Skeleton';
 
 const MapComponent = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -54,12 +55,9 @@ export default function TripDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#EAEFEF] pt-22">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#FF9B51] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#25343F]/60">Loading trip...</p>
-        </div>
-      </div>
+      <main className="flex-1 bg-[#EAEFEF] overflow-y-auto">
+        <SkeletonTripDetail />
+      </main>
     );
   }
 
