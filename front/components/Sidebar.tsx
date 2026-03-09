@@ -78,7 +78,7 @@ export default function Sidebar({
         selectedLon={selectedLon}
       />
       <div className="flex-1 min-h-[300px]">
-        <LobbyBox />
+        
       </div>
     </div>
   );
