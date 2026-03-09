@@ -4,12 +4,20 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Sidebar from '@/components/Sidebar';
-import { getMarkers, getToken } from '@/lib/api';
+import { getMarkers } from '@/lib/api';
 import { MarkerData } from '@/components/Map';
+import { useToast } from '@/components/Toast';
 
 const MapComponent = dynamic(() => import('@/components/Map'), {
   ssr: false,
-  loading: () => <div className="w-full h-full bg-[#EAEFEF] animate-pulse flex items-center justify-center text-[#BFC9D1] text-sm">Loading Map...</div>
+  loading: () => (
+    <div className="w-full h-full bg-[#EAEFEF] animate-pulse flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-10 h-10 border-4 border-[#FF9B51] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-[#BFC9D1] text-sm">Loading Map...</p>
+      </div>
+    </div>
+  ),
 });
 
 interface TripData {
@@ -25,17 +33,19 @@ interface TripData {
 
 export default function HomePage() {
   const router = useRouter();
+  const { addToast } = useToast();
   const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
+  const [searchLocation, setSearchLocation] = useState<{ lat: number; lon: number } | null>(null);
 
-  // Location being selected on the map (for Step 3)
+  // Location being selected on the map (via center-pin)
   const [pendingLocationName, setPendingLocationName] = useState('');
   const [pendingLat, setPendingLat] = useState<number | null>(null);
   const [pendingLon, setPendingLon] = useState<number | null>(null);
 
   // Viewport-based marker loading
   const handleMapMove = useCallback(async (bounds: { west: number; south: number; east: number; north: number }) => {
-    if (selectionMode) return; // Don't reload markers while selecting
+    if (selectionMode) return;
     try {
       const serverMarkers = await getMarkers(bounds);
       setMarkers(
@@ -48,11 +58,10 @@ export default function HomePage() {
         }))
       );
     } catch (err) {
-      console.error('Failed to load markers:', err);
+      // Silently fail — API might not be running yet
     }
   }, [selectionMode]);
 
-  // Navigate to trip detail on marker click
   const handleMarkerClick = useCallback((markerId: string) => {
     router.push(`/trip/${markerId}`);
   }, [router]);
@@ -62,24 +71,32 @@ export default function HomePage() {
     setSelectionMode(true);
   };
 
-  // When user searches and selects a location in Step 3
+  // When user searches and selects a location in Step 3 (from Nominatim)
   const handleLocationSearch = (lat: number, lon: number, name: string) => {
     setPendingLocationName(name);
     setPendingLat(lat);
     setPendingLon(lon);
+    // Fly to location on map
+    setSearchLocation({ lat, lon });
   };
 
-  // Called when user drags pin on map
-  const handleMapLocationSelect = (lat: number, lon: number) => {
-    const name = `Selected (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-    setPendingLocationName(name);
+  // Called continuously as map moves while in selection mode (center-pin)
+  const handleMapLocationSelect = useCallback((lat: number, lon: number, locationName?: string) => {
     setPendingLat(lat);
     setPendingLon(lon);
-  };
+    if (locationName) {
+      setPendingLocationName(locationName);
+    } else {
+      setPendingLocationName(`📍 ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+    }
+  }, []);
 
   // Confirm location from map selection
   const handleConfirmSelection = () => {
     setSelectionMode(false);
+    if (pendingLat != null && pendingLon != null) {
+      addToast('Location selected! 📍', 'success', 2000);
+    }
   };
 
   // Cancel map selection
@@ -90,23 +107,17 @@ export default function HomePage() {
     setSelectionMode(false);
   };
 
-  // Add trip — now refreshes markers after creation
+  // Trip created
   const handleAddTrip = (trip: TripData) => {
-    // Clear pending
     setPendingLocationName('');
     setPendingLat(null);
     setPendingLon(null);
-    // Trigger a marker reload by a slight delay
-    setTimeout(() => {
-      // Re-fetch markers by triggering map move
-      const mapEl = document.querySelector('.maplibregl-canvas') as HTMLElement;
-      if (mapEl) mapEl.click(); // triggers moveend
-    }, 500);
+    addToast('Trip added to the map! 🎉', 'success');
   };
 
   return (
     <main className="flex flex-col lg:flex-row flex-1 w-full bg-[#EAEFEF] p-4 pt-0 gap-4 overflow-hidden pt-22">
-      {/* Sidebar Area */}
+      {/* Sidebar */}
       <section className="w-full lg:w-auto flex-none z-10">
         <Sidebar
           onLocationSelectRequest={handleLocationSelectRequest}
@@ -121,7 +132,7 @@ export default function HomePage() {
         />
       </section>
 
-      {/* Map Area */}
+      {/* Map */}
       <section className="flex-1 w-full h-full rounded-xl overflow-hidden shadow-2xl border border-[#BFC9D1]/30 relative z-0">
         <MapComponent
           markers={markers}
@@ -129,15 +140,18 @@ export default function HomePage() {
           onLocationSelect={handleMapLocationSelect}
           onMapMove={handleMapMove}
           onMarkerClick={handleMarkerClick}
+          enableClustering={true}
+          searchLocation={searchLocation}
         />
 
-        {/* Helper Overlay when in Selection Mode */}
+        {/* Selection Mode Overlay */}
         {selectionMode && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-[#FF9B51] text-white px-5 py-2.5 rounded-full shadow-lg z-20 font-semibold text-sm animate-bounce">
-            📍 Drag the pin to select location
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-[#25343F]/90 backdrop-blur-sm text-white px-5 py-2.5 rounded-full shadow-lg z-20 font-medium text-sm">
+            🗺️ Move the map to position the pin
           </div>
         )}
 
+        {/* Map Info */}
         {!selectionMode && (
           <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10 pointer-events-none border border-[#BFC9D1]/20">
             <h1 className="text-sm font-bold text-[#25343F]">TidRod Map View</h1>
