@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { createTrip, getToken, getUser } from '@/lib/api';
+import { useToast } from './Toast';
 
 interface TripData {
   destination: string;
@@ -21,6 +22,9 @@ interface TripFormProps {
   selectedLocationName?: string;
   selectedLat?: number | null;
   selectedLon?: number | null;
+  selectionMode?: boolean;
+  onConfirmSelection?: () => void;
+  onCancelSelection?: () => void;
 }
 
 export default function TripForm({
@@ -30,10 +34,14 @@ export default function TripForm({
   selectedLocationName,
   selectedLat,
   selectedLon,
+  selectionMode,
+  onConfirmSelection,
+  onCancelSelection,
 }: TripFormProps) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   // Step 1
   const [destination, setDestination] = useState('');
@@ -140,6 +148,7 @@ export default function TripForm({
     const token = getToken();
     if (!token) {
       setSubmitError('Please sign in to create a trip');
+      addToast('Please sign in to create a trip', 'warning');
       return;
     }
 
@@ -186,7 +195,9 @@ export default function TripForm({
       setPhotos([]);
       setPhotoPreviewUrls([]);
     } catch (err: any) {
-      setSubmitError(err.message || 'Failed to create trip');
+      const msg = err.message || 'Failed to create trip';
+      setSubmitError(msg);
+      addToast(msg, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -204,8 +215,44 @@ export default function TripForm({
 
   return (
     <div className="bg-white rounded-3xl shadow-lg border border-[#BFC9D1]/20 overflow-hidden">
-      {/* Step Indicator */}
-      <div className="flex items-center justify-between px-6 pt-5 pb-3">
+      {selectionMode ? (
+        <div className="p-6 flex flex-col items-center text-center animate-fade-in">
+          <div className="w-16 h-16 bg-[#FF9B51]/10 rounded-full flex items-center justify-center mb-4 text-3xl">
+            📍
+          </div>
+          <h3 className="text-xl font-bold text-[#25343F] mb-2">
+            Choose Location
+          </h3>
+          <p className="text-[#25343F]/60 mb-4 text-sm">
+            Move the map to position the pin at your location.
+          </p>
+
+          {/* Show live coordinates */}
+          {selectedLat != null && selectedLon != null && (
+            <div className="w-full mb-4 px-4 py-2.5 bg-[#EAEFEF] rounded-xl text-xs text-[#25343F]/60 font-mono">
+              {selectedLat.toFixed(5)}, {selectedLon.toFixed(5)}
+            </div>
+          )}
+
+          <div className="flex w-full gap-3">
+            <button
+              onClick={onCancelSelection}
+              className="flex-1 py-2.5 px-4 border border-[#BFC9D1] text-[#25343F]/70 rounded-xl hover:bg-[#EAEFEF] font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirmSelection}
+              className="flex-1 py-2.5 px-4 bg-[#FF9B51] text-white rounded-xl hover:bg-[#e8893f] shadow-lg hover:shadow-xl font-bold transition-all"
+            >
+              ✓ Confirm
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Step Indicator */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-3">
         {[1, 2, 3, 4].map((s) => (
           <div key={s} className="flex items-center flex-1">
             <div
@@ -409,7 +456,7 @@ export default function TripForm({
                 disabled={!canGoNext()}
                 className="flex-1 py-3 rounded-xl font-bold text-white bg-[#FF9B51] hover:bg-[#e8893f] disabled:bg-[#BFC9D1] disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl disabled:shadow-none"
               >
-                Set Location →
+                {locationLat != null && locationLon != null ? 'Next →' : 'Set Location →'}
               </button>
             </div>
           </div>
@@ -524,6 +571,8 @@ export default function TripForm({
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }
