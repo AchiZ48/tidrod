@@ -2,55 +2,56 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { useEffect, useState } from "react";
+import { getUser, removeToken, getToken } from "@/lib/api";
 
 export default function Header() {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const [user, setUser] = useState<{ id: string; username: string; email: string } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/login");
-        },
-      },
-    });
+  useEffect(() => {
+    const u = getUser();
+    setUser(u);
+    setLoading(false);
+  }, []);
+
+  const handleSignOut = () => {
+    removeToken();
+    setUser(null);
+    router.push("/login");
   };
 
   return (
-    <header className="fixed left-4 right-4 flex h-[56px] rounded-full py-4 my-4 backdrop-blur-none bg-neutral-50 shadow-md shrink-0 z-50">
+    <header className="fixed left-4 right-4 flex h-[56px] rounded-full py-4 my-4 backdrop-blur-md bg-white/80 shadow-md shrink-0 z-50 border border-[#BFC9D1]/30">
       <div className="flex justify-between items-center w-full">
         {/* Logo */}
         <div>
-          <Link href="/" className="text-xl font-bold m-auto mx-10">
-            TidRod
+          <Link href="/" className="text-xl font-bold m-auto mx-10 text-[#25343F]">
+            <span className="text-[#FF9B51]">Tid</span>Rod
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex gap-10 mx-10 items-center">
-          <Link href="/" className="hover:text-blue-500">
+        <nav className="flex gap-8 mx-10 items-center">
+          <Link href="/home" className="text-[#25343F]/70 hover:text-[#FF9B51] transition-colors font-medium text-sm">
+            Map
+          </Link>
+          <Link href="/" className="text-[#25343F]/70 hover:text-[#FF9B51] transition-colors font-medium text-sm">
             Home
-          </Link>
-          <Link href="/about" className="hover:text-blue-500">
-            About
-          </Link>
-          <Link href="/contact" className="hover:text-blue-500">
-            Contact
           </Link>
 
           {/* Auth Section */}
-          {isPending ? (
-            <div className="w-20 h-8 bg-neutral-200 rounded-full animate-pulse" />
-          ) : session?.user ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-neutral-600 hidden sm:inline">
-                {session.user.name || session.user.email}
+          {loading ? (
+            <div className="w-20 h-8 bg-[#EAEFEF] rounded-full animate-pulse" />
+          ) : user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-[#25343F]/60 hidden sm:inline font-medium">
+                {user.username}
               </span>
               <button
                 onClick={handleSignOut}
-                className="px-4 py-1.5 text-sm rounded-full bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
+                className="px-4 py-1.5 text-sm rounded-full bg-[#25343F] text-white hover:bg-[#25343F]/80 transition-colors"
               >
                 Sign Out
               </button>
@@ -58,7 +59,7 @@ export default function Header() {
           ) : (
             <Link
               href="/login"
-              className="px-4 py-1.5 text-sm rounded-full bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
+              className="px-5 py-1.5 text-sm rounded-full bg-[#FF9B51] text-white hover:bg-[#e8893f] transition-colors shadow-md font-semibold"
             >
               Sign In
             </Link>

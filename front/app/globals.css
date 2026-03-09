@@ -1,14 +1,18 @@
 @import "tailwindcss";
 
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-main: var(--font-anakotmai)
-}
+  --font-main: var(--font-anakotmai);
 
+  /* TidRod PRD Color Palette */
+  --color-tidrod-light: #EAEFEF;
+  --color-tidrod-muted: #BFC9D1;
+  --color-tidrod-dark: #25343F;
+  --color-tidrod-accent: #FF9B51;
+}
 
 @layer utilities {
   .font-main {
@@ -34,3 +38,10 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* MapLibre popup customization */
+.maplibregl-popup-content {
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #BFC9D1 !important;
+}

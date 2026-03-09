@@ -1,20 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Sidebar from '@/components/Sidebar';
+import { getMarkers, getToken } from '@/lib/api';
+import { MarkerData } from '@/components/Map';
 
 const MapComponent = dynamic(() => import('@/components/Map'), {
   ssr: false,
-  loading: () => <div className="w-full h-full bg-gray-200 dark:bg-gray-800 animate-pulse flex items-center justify-center text-gray-400 text-sm">Loading Map...</div>
+  loading: () => <div className="w-full h-full bg-[#EAEFEF] animate-pulse flex items-center justify-center text-[#BFC9D1] text-sm">Loading Map...</div>
 });
-
-interface MarkerData {
-  lat: number;
-  lon: number;
-  label?: string;
-  color?: string;
-}
 
 interface TripData {
   destination: string;
@@ -28,6 +24,7 @@ interface TripData {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
 
@@ -35,6 +32,30 @@ export default function HomePage() {
   const [pendingLocationName, setPendingLocationName] = useState('');
   const [pendingLat, setPendingLat] = useState<number | null>(null);
   const [pendingLon, setPendingLon] = useState<number | null>(null);
+
+  // Viewport-based marker loading
+  const handleMapMove = useCallback(async (bounds: { west: number; south: number; east: number; north: number }) => {
+    if (selectionMode) return; // Don't reload markers while selecting
+    try {
+      const serverMarkers = await getMarkers(bounds);
+      setMarkers(
+        serverMarkers.map((m: any) => ({
+          id: m.id,
+          lat: m.latitude,
+          lon: m.longitude,
+          label: m.title,
+          color: '#FF9B51',
+        }))
+      );
+    } catch (err) {
+      console.error('Failed to load markers:', err);
+    }
+  }, [selectionMode]);
+
+  // Navigate to trip detail on marker click
+  const handleMarkerClick = useCallback((markerId: string) => {
+    router.push(`/trip/${markerId}`);
+  }, [router]);
 
   // Enter map selection mode (Step 3 pin drop)
   const handleLocationSelectRequest = () => {
@@ -46,11 +67,6 @@ export default function HomePage() {
     setPendingLocationName(name);
     setPendingLat(lat);
     setPendingLon(lon);
-    // Also place a marker on the map for preview
-    setMarkers(prev => {
-      const others = prev.filter(m => m.label !== 'Preview');
-      return [...others, { lat, lon, label: 'Preview', color: '#3B82F6' }];
-    });
   };
 
   // Called when user drags pin on map
@@ -63,10 +79,6 @@ export default function HomePage() {
 
   // Confirm location from map selection
   const handleConfirmSelection = () => {
-    if (pendingLat != null && pendingLon != null) {
-      // Remove preview marker
-      setMarkers(prev => prev.filter(m => m.label !== 'Preview'));
-    }
     setSelectionMode(false);
   };
 
@@ -75,36 +87,25 @@ export default function HomePage() {
     setPendingLocationName('');
     setPendingLat(null);
     setPendingLon(null);
-    setMarkers(prev => prev.filter(m => m.label !== 'Preview'));
     setSelectionMode(false);
   };
 
-  // Add trip pin to map
+  // Add trip — now refreshes markers after creation
   const handleAddTrip = (trip: TripData) => {
-    if (trip.lat != null && trip.lon != null) {
-      const timeLabel = trip.timeOption === 'specific' ? trip.specificTime : 'Flexible';
-      const privacyLabel = trip.privacy === 'open' ? '🌍 Open' : '🔒 Private';
-      setMarkers(prev => {
-        const others = prev.filter(m => m.label !== 'Preview');
-        return [
-          ...others,
-          {
-            lat: trip.lat!,
-            lon: trip.lon!,
-            label: `📌 ${trip.destination}\n📅 ${trip.date} ${timeLabel}\n${privacyLabel}`,
-            color: '#8B5CF6',
-          },
-        ];
-      });
-    }
     // Clear pending
     setPendingLocationName('');
     setPendingLat(null);
     setPendingLon(null);
+    // Trigger a marker reload by a slight delay
+    setTimeout(() => {
+      // Re-fetch markers by triggering map move
+      const mapEl = document.querySelector('.maplibregl-canvas') as HTMLElement;
+      if (mapEl) mapEl.click(); // triggers moveend
+    }, 500);
   };
 
   return (
-    <main className="flex flex-col lg:flex-row flex-1 w-full bg-gray-50 dark:bg-gray-900 p-4 pt-0 gap-4 overflow-hidden pt-22">
+    <main className="flex flex-col lg:flex-row flex-1 w-full bg-[#EAEFEF] p-4 pt-0 gap-4 overflow-hidden pt-22">
       {/* Sidebar Area */}
       <section className="w-full lg:w-auto flex-none z-10">
         <Sidebar
@@ -121,24 +122,26 @@ export default function HomePage() {
       </section>
 
       {/* Map Area */}
-      <section className="flex-1 w-full h-full rounded-xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 relative z-0">
+      <section className="flex-1 w-full h-full rounded-xl overflow-hidden shadow-2xl border border-[#BFC9D1]/30 relative z-0">
         <MapComponent
           markers={markers}
           selectionMode={selectionMode ? 'destination' : null}
           onLocationSelect={handleMapLocationSelect}
+          onMapMove={handleMapMove}
+          onMarkerClick={handleMarkerClick}
         />
 
         {/* Helper Overlay when in Selection Mode */}
         {selectionMode && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg z-20 font-medium animate-bounce">
-            Drag the pin to select location
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-[#FF9B51] text-white px-5 py-2.5 rounded-full shadow-lg z-20 font-semibold text-sm animate-bounce">
+            📍 Drag the pin to select location
           </div>
         )}
 
         {!selectionMode && (
-          <div className="absolute top-4 left-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10 pointer-events-none">
-            <h1 className="text-sm font-bold text-gray-800 dark:text-white">TidRod Map View</h1>
-            <p className="text-xs text-gray-500">Create trips to see them on the map</p>
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10 pointer-events-none border border-[#BFC9D1]/20">
+            <h1 className="text-sm font-bold text-[#25343F]">TidRod Map View</h1>
+            <p className="text-xs text-[#25343F]/50">Click a marker to view trip details</p>
           </div>
         )}
       </section>

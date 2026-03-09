@@ -3,7 +3,7 @@ import MouseAura from "../components/MouseAura";
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-white text-gray-900">
+    <div className="relative min-h-screen bg-white text-[#25343F]">
       {/* Mouse Aura Background */}
       <MouseAura />
 
@@ -11,15 +11,15 @@ export default function Home() {
       <section className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-6 text-center">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
           Share Rides. Save Money.{" "}
-          <span className="text-indigo-600">Go Green.</span>
+          <span className="text-[#FF9B51]">Go Green.</span>
         </h1>
-        <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mb-10">
-          TidRod connects students for easy campus carpooling. Find rides, split
-          costs, and reduce your carbon footprint.
+        <p className="text-lg sm:text-xl text-[#25343F]/60 max-w-2xl mb-10">
+          TidRod connects travelers for shared journeys. Find rides, split
+          costs, and discover new places through fellow travelers.
         </p>
         <Link
           href="/home"
-          className="inline-flex items-center px-8 py-4 bg-indigo-600 text-white font-medium rounded-full hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl"
+          className="inline-flex items-center px-8 py-4 bg-[#FF9B51] text-white font-medium rounded-full hover:bg-[#e8893f] transition-colors shadow-lg hover:shadow-xl"
         >
           Get Started
           <svg
@@ -39,81 +39,48 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="relative z-10 py-20 px-6 bg-gray-50/80">
+      <section className="relative z-10 py-20 px-6 bg-[#EAEFEF]/60">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12 text-[#25343F]">
             Why Choose TidRod?
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-indigo-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-[#BFC9D1]/20">
+              <div className="w-12 h-12 bg-[#FF9B51]/10 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#FF9B51]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Find Rides Instantly</h3>
-              <p className="text-gray-600">
-                Quick matching with students going your way. No more waiting at
-                bus stops.
+              <h3 className="text-xl font-semibold mb-2 text-[#25343F]">Discover Places</h3>
+              <p className="text-[#25343F]/60">
+                Explore travel spots shared by real travelers. See their stories and photos on the map.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-[#BFC9D1]/20">
+              <div className="w-12 h-12 bg-[#FF9B51]/10 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#FF9B51]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Split Costs</h3>
-              <p className="text-gray-600">
-                Save on gas and parking fees. Fair cost sharing makes commuting
-                affordable.
+              <h3 className="text-xl font-semibold mb-2 text-[#25343F]">Chat in Real-time</h3>
+              <p className="text-[#25343F]/60">
+                Ask questions, share tips, and plan trips together with live chat on every trip.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-emerald-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-[#BFC9D1]/20">
+              <div className="w-12 h-12 bg-[#FF9B51]/10 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#FF9B51]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Eco-Friendly</h3>
-              <p className="text-gray-600">
-                Reduce your carbon footprint. Every shared ride helps the
-                planet.
+              <h3 className="text-xl font-semibold mb-2 text-[#25343F]">Community Map</h3>
+              <p className="text-[#25343F]/60">
+                A crowd-sourced travel map that grows with every shared experience.
               </p>
             </div>
           </div>
@@ -123,69 +90,58 @@ export default function Home() {
       {/* How It Works Section */}
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-[#25343F]">How It Works</h2>
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            {/* Step 1 */}
             <div className="flex-1 text-center">
-              <div className="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#FF9B51] text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-lg shadow-[#FF9B51]/30">
                 1
               </div>
-              <h3 className="text-xl font-semibold mb-2">Create Account</h3>
-              <p className="text-gray-600">
-                Sign up with your campus email in seconds.
-              </p>
+              <h3 className="text-xl font-semibold mb-2 text-[#25343F]">Create Account</h3>
+              <p className="text-[#25343F]/60">Sign up in seconds and join the community.</p>
             </div>
 
-            {/* Arrow */}
-            <div className="hidden md:block text-gray-300">
+            <div className="hidden md:block text-[#BFC9D1]">
               <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </div>
 
-            {/* Step 2 */}
             <div className="flex-1 text-center">
-              <div className="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#FF9B51] text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-lg shadow-[#FF9B51]/30">
                 2
               </div>
-              <h3 className="text-xl font-semibold mb-2">Post or Search</h3>
-              <p className="text-gray-600">
-                Offer a ride or find one that fits your schedule.
-              </p>
+              <h3 className="text-xl font-semibold mb-2 text-[#25343F]">Share Your Trip</h3>
+              <p className="text-[#25343F]/60">Pin your travel experience on the map with photos and stories.</p>
             </div>
 
-            {/* Arrow */}
-            <div className="hidden md:block text-gray-300">
+            <div className="hidden md:block text-[#BFC9D1]">
               <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </div>
 
-            {/* Step 3 */}
             <div className="flex-1 text-center">
-              <div className="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#FF9B51] text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-lg shadow-[#FF9B51]/30">
                 3
               </div>
-              <h3 className="text-xl font-semibold mb-2">Ride Together</h3>
-              <p className="text-gray-600">
-                Confirm, connect, and enjoy the commute!
-              </p>
+              <h3 className="text-xl font-semibold mb-2 text-[#25343F]">Connect & Explore</h3>
+              <p className="text-[#25343F]/60">Chat with travelers and discover amazing places!</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer CTA */}
-      <section className="relative z-10 py-16 px-6 bg-indigo-600 text-white text-center">
+      <section className="relative z-10 py-16 px-6 bg-[#25343F] text-white text-center">
         <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-          Ready to start carpooling?
+          Ready to explore the world?
         </h2>
-        <p className="text-indigo-100 mb-8 max-w-xl mx-auto">
-          Join thousands of students already saving money and the environment.
+        <p className="text-[#BFC9D1] mb-8 max-w-xl mx-auto">
+          Join the community of travelers sharing their experiences on the map.
         </p>
         <Link
           href="/login"
-          className="inline-flex items-center px-8 py-4 bg-white text-indigo-600 font-medium rounded-full hover:bg-gray-100 transition-colors shadow-lg"
+          className="inline-flex items-center px-8 py-4 bg-[#FF9B51] text-white font-medium rounded-full hover:bg-[#e8893f] transition-colors shadow-lg"
         >
           Join TidRod Today
         </Link>

@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-interface MarkerData {
+export interface MarkerData {
+  id?: string;
   lat: number;
   lon: number;
   label?: string;
   color?: string;
+}
+
+interface MapBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
 }
 
 interface MapProps {
@@ -17,27 +25,30 @@ interface MapProps {
   zoom?: number;
   selectionMode?: 'origin' | 'destination' | null;
   onLocationSelect?: (lat: number, lon: number) => void;
+  onMapMove?: (bounds: MapBounds) => void;
+  onMarkerClick?: (markerId: string) => void;
 }
 
-export default function MapComponent({ 
-  markers = [], 
-  center = [0, 0], 
+export default function MapComponent({
+  markers = [],
+  center = [0, 0],
   zoom = 2,
   selectionMode = null,
-  onLocationSelect
+  onLocationSelect,
+  onMapMove,
+  onMarkerClick,
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const dragMarkerRef = useRef<maplibregl.Marker | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const moveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize Map
   useEffect(() => {
     if (map.current) return;
     if (!mapContainer.current) return;
-
-    console.log("Initializing MapLibre...");
 
     const mapInstance = new maplibregl.Map({
       container: mapContainer.current,
@@ -60,13 +71,11 @@ export default function MapComponent({
           }
         ]
       } as any,
-      // Thailand coordinates: [100.5018, 13.7563] (Bangkok approx) or center of Thailand
-      center: center.length === 2 && (center[0] !== 0 || center[1] !== 0) ? center : [100.5018, 13.7563], // Default to Bangkok/Thailand
+      center: center.length === 2 && (center[0] !== 0 || center[1] !== 0) ? center : [100.5018, 13.7563],
       zoom: center.length === 2 && (center[0] !== 0 || center[1] !== 0) ? zoom : 6
     });
 
     map.current = mapInstance;
-
     mapInstance.addControl(new maplibregl.NavigationControl(), 'top-right');
 
     const geolocate = new maplibregl.GeolocateControl({
@@ -77,13 +86,40 @@ export default function MapComponent({
     mapInstance.addControl(geolocate, 'top-right');
 
     mapInstance.on('load', () => {
-      console.log("Map loaded successfully");
       setIsMapReady(true);
       mapInstance.resize();
 
       const hasCustomCenter = center.length === 2 && (center[0] !== 0 || center[1] !== 0);
       if (!hasCustomCenter) {
-         geolocate.trigger();
+        geolocate.trigger();
+      }
+
+      // Fire initial bounds
+      if (onMapMove) {
+        const bounds = mapInstance.getBounds();
+        onMapMove({
+          west: bounds.getWest(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          north: bounds.getNorth(),
+        });
+      }
+    });
+
+    // Debounced map move for viewport-based marker loading
+    mapInstance.on('moveend', () => {
+      if (onMapMove) {
+        if (moveTimeoutRef.current) clearTimeout(moveTimeoutRef.current);
+        moveTimeoutRef.current = setTimeout(() => {
+          if (!map.current) return;
+          const bounds = map.current.getBounds();
+          onMapMove({
+            west: bounds.getWest(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            north: bounds.getNorth(),
+          });
+        }, 300);
       }
     });
 
@@ -92,6 +128,7 @@ export default function MapComponent({
     });
 
     return () => {
+      if (moveTimeoutRef.current) clearTimeout(moveTimeoutRef.current);
       mapInstance.remove();
       map.current = null;
       setIsMapReady(false);
@@ -108,30 +145,54 @@ export default function MapComponent({
 
     // Add new markers
     markers.forEach(m => {
-      const marker = new maplibregl.Marker({ color: m.color || '#3B82F6' })
+      const el = document.createElement('div');
+      el.className = 'custom-marker';
+      el.style.cssText = `
+        width: 32px; height: 32px; border-radius: 50% 50% 50% 0;
+        background: ${m.color || '#FF9B51'}; transform: rotate(-45deg);
+        border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        cursor: pointer; transition: transform 0.2s;
+      `;
+      el.onmouseenter = () => { el.style.transform = 'rotate(-45deg) scale(1.2)'; };
+      el.onmouseleave = () => { el.style.transform = 'rotate(-45deg) scale(1)'; };
+
+      // Click handler for navigation
+      if (m.id && onMarkerClick) {
+        el.onclick = (e) => {
+          e.stopPropagation();
+          onMarkerClick(m.id!);
+        };
+      }
+
+      const marker = new maplibregl.Marker({ element: el })
         .setLngLat([m.lon, m.lat])
-        .setPopup(new maplibregl.Popup({ offset: 25 }).setText(m.label || ''))
         .addTo(map.current!);
-      
+
+      if (m.label) {
+        marker.setPopup(
+          new maplibregl.Popup({ offset: 25, closeButton: false })
+            .setHTML(`<div style="font-weight:600;font-size:13px;color:#25343F;max-width:200px">${m.label}</div>`)
+        );
+      }
+
       markersRef.current.push(marker);
     });
 
-    // Fit bounds if we have markers and NOT in selection mode (don't jump around while selecting)
-    if (markers.length > 0 && !selectionMode) {
-       const bounds = new maplibregl.LngLatBounds();
-       markers.forEach(m => bounds.extend([m.lon, m.lat]));
-       try {
-         map.current.fitBounds(bounds, { padding: 50, maxZoom: 15 });
-       } catch (e) { console.error("Error fitting bounds:", e); }
+    // Don't fit bounds when in selection mode, or if it's a single-marker static view (trip detail page)
+    if (markers.length > 1 && !selectionMode) {
+      const bounds = new maplibregl.LngLatBounds();
+      markers.forEach(m => bounds.extend([m.lon, m.lat]));
+      try {
+        map.current.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+      } catch (e) { console.error("Error fitting bounds:", e); }
     }
 
-  }, [markers, isMapReady, selectionMode]);
+  }, [markers, isMapReady, selectionMode, onMarkerClick]);
 
   // Manage Selection Mode (Draggable Pin)
   useEffect(() => {
     if (!isMapReady || !map.current) return;
 
-    // Cleanup previous drag marker
     if (dragMarkerRef.current) {
       dragMarkerRef.current.remove();
       dragMarkerRef.current = null;
@@ -139,16 +200,16 @@ export default function MapComponent({
 
     if (selectionMode) {
       const center = map.current.getCenter();
-      const color = selectionMode === 'origin' ? '#10B981' : '#EF4444'; // Green or Red
+      const color = selectionMode === 'origin' ? '#10B981' : '#EF4444';
 
-      const marker = new maplibregl.Marker({ 
+      const marker = new maplibregl.Marker({
         draggable: true,
         color: color,
         scale: 1.2
       })
         .setLngLat(center)
         .addTo(map.current);
-      
+
       marker.on('dragend', () => {
         const lngLat = marker.getLngLat();
         if (onLocationSelect) {
@@ -157,14 +218,12 @@ export default function MapComponent({
       });
 
       dragMarkerRef.current = marker;
-      
-      // Optional: Popup instruction?
+
       const popup = new maplibregl.Popup({ offset: 25, closeButton: false })
-          .setText("Drag to select location")
-          .setLngLat(center)
-          .addTo(map.current);
-      
-      // Remove popup on drag start
+        .setText("Drag to select location")
+        .setLngLat(center)
+        .addTo(map.current);
+
       marker.on('dragstart', () => popup.remove());
     }
 
@@ -172,9 +231,9 @@ export default function MapComponent({
 
   return (
     <div className="w-full h-full min-h-[400px] relative">
-      <div 
-        ref={mapContainer} 
-        className="w-full h-full rounded-lg overflow-hidden shadow-lg bg-gray-200 dark:bg-gray-800" 
+      <div
+        ref={mapContainer}
+        className="w-full h-full rounded-lg overflow-hidden shadow-lg bg-[#EAEFEF]"
       />
     </div>
   );
