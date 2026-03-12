@@ -14,11 +14,12 @@ interface Message {
 
 interface ChatProps {
   tripId: string;
+  onLeave?: () => void;
 }
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:5000';
 
-export default function Chat({ tripId }: ChatProps) {
+export default function Chat({ tripId, onLeave }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [connected, setConnected] = useState(false);
@@ -120,8 +121,16 @@ export default function Chat({ tripId }: ChatProps) {
       <div className="px-4 py-3 bg-[#25343F] text-white flex items-center justify-between">
         <h3 className="font-semibold text-sm flex items-center gap-2">
           💬 Trip Chat
+          <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-red-400'}`} />
         </h3>
-        <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-red-400'}`} />
+        {onLeave && (
+          <button 
+            onClick={onLeave}
+            className="text-xs text-white/70 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded-md transition-all"
+          >
+            Leave Chat
+          </button>
+        )}
       </div>
 
       {/* Messages */}

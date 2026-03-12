@@ -29,6 +29,7 @@ interface MapProps {
   onMarkerClick?: (markerId: string) => void;
   enableClustering?: boolean;
   searchLocation?: { lat: number; lon: number } | null;
+  autoFitBounds?: boolean;
 }
 
 export default function MapComponent({
@@ -41,6 +42,7 @@ export default function MapComponent({
   onMarkerClick,
   enableClustering = true,
   searchLocation,
+  autoFitBounds = false,
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -244,18 +246,25 @@ export default function MapComponent({
         el.className = 'custom-map-marker';
         const label = feature.properties.label || 'Trip';
         el.style.cssText = `
-          display: flex; align-items: center; gap: 6px;
-          background: white; padding: 4px 10px 4px 6px;
-          border-radius: 9999px; font-weight: 600; font-size: 13px;
-          color: #25343F; white-space: nowrap;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid white;
-          cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-          transform-origin: center bottom;
+          cursor: pointer;
         `;
-        el.innerHTML = `<span style="font-size: 16px;">📍</span><span style="overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${label}</span>`;
+        el.innerHTML = `
+          <div style="
+            display: flex; align-items: center; gap: 6px;
+            background: white; padding: 4px 10px 4px 6px;
+            border-radius: 9999px; font-weight: 600; font-size: 13px;
+            color: #25343F; white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid white;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center bottom;
+          " class="marker-inner">
+            <span style="font-size: 16px;">📍</span><span style="overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${label}</span>
+          </div>
+        `;
         
-        el.onmouseenter = () => { el.style.transform = 'scale(1.05) translateY(-2px)'; el.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)'; };
-        el.onmouseleave = () => { el.style.transform = 'scale(1) translateY(0)'; el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; };
+        const inner = el.querySelector('.marker-inner') as HTMLElement;
+        el.onmouseenter = () => { inner.style.transform = 'scale(1.05) translateY(-2px)'; inner.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)'; };
+        el.onmouseleave = () => { inner.style.transform = 'scale(1) translateY(0)'; inner.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; };
 
         if (id && onMarkerClick) {
           el.onclick = (e) => {
@@ -275,7 +284,7 @@ export default function MapComponent({
 
     mInstance.on('render', updateMarkers);
 
-    if (markers.length > 1 && !selectionMode) {
+    if (autoFitBounds && markers.length > 1 && !selectionMode) {
       const bounds = new maplibregl.LngLatBounds();
       markers.forEach(m => bounds.extend([m.lon, m.lat]));
       try {

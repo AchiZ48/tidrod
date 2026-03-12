@@ -23,7 +23,7 @@ services:
       - "5000:5000"
     environment:
       DATABASE_URL: postgresql://tidrod:tidrod_secret@db:5432/tidrod
-      JWT_SECRET: change_me_in_production_jwt_secret_key_2026
+      JWT_SECRET: 2e3c657879b99309647cc6501af410c7
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-}
       SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-trip-photos}

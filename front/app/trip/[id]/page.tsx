@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { getTrip, getToken, getUser } from '@/lib/api';
+import { getTrip, getToken, getUser, deleteTrip } from '@/lib/api';
 import Chat from '@/components/Chat';
 import { SkeletonTripDetail } from '@/components/Skeleton';
+import { useToast } from '@/components/Toast';
 
 const MapComponent = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -37,7 +38,10 @@ export default function TripDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const user = getUser();
+  const { addToast } = useToast();
 
   useEffect(() => {
     async function loadTrip() {
@@ -79,6 +83,28 @@ export default function TripDetailPage() {
     );
   }
 
+  const handleDeleteTrip = async () => {
+    if (!window.confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+      return;
+    }
+
+    const token = getToken();
+    if (!token) {
+      addToast('You must be logged in to delete a trip', 'error');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteTrip(trip.id, token);
+      addToast('Trip deleted successfully', 'success');
+      router.push('/home');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to delete trip', 'error');
+      setIsDeleting(false);
+    }
+  };
+
   const photos = trip.photos?.filter(Boolean) || [];
 
   return (
@@ -114,6 +140,17 @@ export default function TripDetailPage() {
                     </span>
                   </div>
                 </div>
+
+                {/* Delete Button (Only for Author) */}
+                {user?.id === trip.author_id && (
+                  <button
+                    onClick={handleDeleteTrip}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-100 disabled:opacity-50"
+                  >
+                    🗑️ {isDeleting ? 'Deleting...' : 'Delete Trip'}
+                  </button>
+                )}
               </div>
 
               {trip.description && (
@@ -162,7 +199,31 @@ export default function TripDetailPage() {
           {/* Right Column: Chat */}
           <div className="lg:col-span-1">
             <div className="sticky top-24">
-              <Chat tripId={trip.id} />
+              {hasJoined ? (
+                <Chat tripId={trip.id} onLeave={() => setHasJoined(false)} />
+              ) : (
+                <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-[#BFC9D1]/20">
+                  <div className="w-16 h-16 bg-[#FF9B51]/10 text-[#FF9B51] rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                    💬
+                  </div>
+                  <h3 className="font-bold text-[#25343F] text-lg mb-2">Trip Discussion</h3>
+                  <p className="text-sm text-[#25343F]/60 mb-6 leading-relaxed">
+                    Join the chat to talk with the author and other travelers about this trip.
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        addToast('Please login to join the chat', 'error');
+                        return;
+                      }
+                      setHasJoined(true);
+                    }}
+                    className="w-full py-3 px-4 bg-[#FF9B51] hover:bg-[#e8893f] text-white rounded-xl font-semibold transition-all shadow-md hover:shadow-lg"
+                  >
+                    Join Trip Chat
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

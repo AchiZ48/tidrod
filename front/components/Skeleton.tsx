@@ -13,7 +13,7 @@ export function SkeletonText({ lines = 3, className = '' }: { lines?: number; cl
         <div
           key={i}
           className="h-3.5 bg-[#BFC9D1]/20 animate-pulse rounded-lg"
-          style={{ width: i === lines - 1 ? '60%' : `${85 + Math.random() * 15}%` }}
+          style={{ width: i === lines - 1 ? '60%' : `${85 + ((i * 7) % 15)}%` }}
         />
       ))}
     </div>
